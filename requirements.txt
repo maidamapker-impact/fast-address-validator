@@ -1,2 +1,2 @@
 pdfplumber>=0.11,<1
-pytest>=8,<9
+pytest>=8

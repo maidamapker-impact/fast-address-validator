@@ -16,6 +16,16 @@ The PDF should contain one `key: value` field per line. The CLI prints a JSON pa
 python main.py document.pdf '{"Name":"Jane Doe","Address":"123 Main St"}'
 ```
 
+To validate the PDF's `Billing Address` with the local POC fixtures, omit the expected JSON object:
+
+```sh
+python main.py document.pdf
+```
+
+The CLI extracts the multiline field labeled `Billing Address`, compares it with `address_fixtures.json`, and returns top-level `valid: true` or `valid: false`. A missing Billing Address also returns `valid: false`; no network or application database is queried.
+
+To use Google later, provide `--api-key` or set `GOOGLE_MAPS_API_KEY`. The fixture file is only used when no API key is supplied.
+
 Use `validate_document` from `main.py` in a task runner, FastAPI endpoint, or Salesforce integration. Field results are explicitly classified as `exact`, `partial`, `missing`, or `mismatch`.
 
 ## Validate address correctness

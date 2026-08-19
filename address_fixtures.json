@@ -1,0 +1,27 @@
+{
+  "valid": [
+    {
+      "address_lines": [
+        "2810 North Church Street PMB 129249",
+        "Wilmington, DE 19802",
+        "United States"
+      ]
+    }
+  ],
+  "invalid": [
+    {
+      "address_lines": [
+        "2810 North Church Street PMB 000000",
+        "Wilmington, DE 19802",
+        "United States"
+      ]
+    },
+    {
+      "address_lines": [
+        "Not A Real Street 99999",
+        "Nowhere, ZZ 00000",
+        "United States"
+      ]
+    }
+  ]
+}

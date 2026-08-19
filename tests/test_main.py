@@ -27,6 +27,28 @@ def test_extract_key_values_rejects_empty_separator():
         main.extract_key_values("Name: Jane", separator="")
 
 
+def test_extract_billing_address_reads_multiline_value():
+    text = "Customer: Jane Doe\nBilling Address:\n123 Main St\nAustin, TX 78701\nEmail: jane@example.com"
+    assert main.extract_billing_address(text) == ("123 Main St", "Austin, TX 78701")
+
+
+def test_extract_billing_address_stops_after_postal_code():
+    text = (
+        "Billing Address: 2810 North Church Street PMB\n"
+        "129249, Wilmington, DE 19802 United States\n"
+        "Subscription Information\n"
+        "Billing Frequency: Monthly"
+    )
+    assert main.extract_billing_address(text) == (
+        "2810 North Church Street PMB",
+        "129249, Wilmington, DE 19802 United States",
+    )
+
+
+def test_extract_billing_address_returns_empty_when_missing():
+    assert main.extract_billing_address("Name: Jane Doe\nAddress: 123 Main St") == ()
+
+
 def test_extract_text_rejects_missing_pdf(tmp_path: Path):
     with pytest.raises(main.PDFExtractionError, match="not a file"):
         main.extract_text(tmp_path / "missing.pdf")
@@ -159,3 +181,22 @@ def test_validate_address_rejects_unresolved_tokens(monkeypatch):
 
     assert result.correct is False
     assert result.unresolved_tokens == ("not-an-address",)
+
+
+def test_validate_address_fixture_accepts_configured_valid_address():
+    result = main.validate_address_fixture(
+        [
+            "2810 North Church Street PMB 129249",
+            "Wilmington, DE 19802",
+            "United States",
+        ]
+    )
+
+    assert result.valid is True
+    assert result.validation_granularity == "FIXTURE"
+
+
+def test_validate_address_fixture_rejects_unknown_address():
+    result = main.validate_address_fixture(["Not A Real Street 99999", "Nowhere, ZZ 00000"])
+
+    assert result.valid is False
