@@ -99,3 +99,63 @@ def test_validate_document_returns_integration_payload(monkeypatch, tmp_path: Pa
     assert payload["status"] == "failed"
     assert payload["fields"][0]["status"] == "exact"
     assert payload["fields"][1]["status"] == "mismatch"
+
+
+def test_validate_address_accepts_complete_confirmed_premise(monkeypatch):
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return b'{}'
+
+    response = {
+        "result": {
+            "verdict": {
+                "addressComplete": True,
+                "hasUnconfirmedComponents": False,
+                "validationGranularity": "PREMISE",
+            },
+            "address": {"formattedAddress": "1600 Amphitheatre Pkwy, Mountain View, CA 94043"},
+        }
+    }
+    monkeypatch.setattr(main, "urlopen", lambda request, timeout: Response())
+    monkeypatch.setattr(main.json, "load", lambda file: response)
+
+    result = main.validate_address(["1600 Amphitheatre Pkwy", "Mountain View, CA 94043"], api_key="test")
+
+    assert result.correct is True
+    assert result.formatted_address.startswith("1600 Amphitheatre")
+
+
+def test_validate_address_rejects_unresolved_tokens(monkeypatch):
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    response = {
+        "result": {
+            "verdict": {
+                "addressComplete": False,
+                "hasUnconfirmedComponents": True,
+                "validationGranularity": "ROUTE",
+            },
+            "address": {
+                "unresolvedTokens": ["not-an-address"],
+                "unconfirmedComponentTypes": ["route"],
+            },
+        }
+    }
+    monkeypatch.setattr(main, "urlopen", lambda request, timeout: Response())
+    monkeypatch.setattr(main.json, "load", lambda file: response)
+
+    result = main.validate_address(["not-an-address"], api_key="test")
+
+    assert result.correct is False
+    assert result.unresolved_tokens == ("not-an-address",)
